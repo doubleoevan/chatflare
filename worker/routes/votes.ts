@@ -1,17 +1,33 @@
 import { Hono } from "hono";
+import { desc } from "drizzle-orm";
+
+import { createDb } from "../db/client";
+import { providerVotes } from "../db/schema";
 
 const app = new Hono<{ Bindings: Env }>();
 
 // GET /v1/provider-votes?limit=N
-// origin queried prisma; phase 2 returns empty array
-// real persistence lands in phase 5 via D1
-app.get("/v1/provider-votes", (context) => {
-    return context.json([]);
+// returns most-recent votes; default limit 50, capped at 100.
+app.get("/v1/provider-votes", async (context) => {
+    const limitParam = context.req.query("limit");
+    const requestedLimit = limitParam ? Number(limitParam) : 50;
+    const limit = Number.isFinite(requestedLimit)
+        ? Math.min(Math.max(requestedLimit, 1), 100)
+        : 50;
+
+    const db = createDb(context.env.DB);
+    const rows = await db
+        .select()
+        .from(providerVotes)
+        .orderBy(desc(providerVotes.createdAt))
+        .limit(limit);
+
+    return context.json(rows);
 });
 
 // POST /v1/provider-votes
-// origin saved to prisma; phase 2 echoes back with generated id + cf geo
-// real persistence lands in phase 5 via D1
+// inserts a new vote and echoes it back. cf-derived geo is captured at vote time
+// from request.cf; body lat/lng overrides cf data if explicitly provided.
 app.post("/v1/provider-votes", async (context) => {
     const body = await context.req.json<{
         winnerProviderId: string;
@@ -23,7 +39,7 @@ app.post("/v1/provider-votes", async (context) => {
         longitude?: number;
     }>();
 
-    // workers gives us request.cf for free; no geoip-lite library needed
+    // workers attaches geo info to every request for free
     const cloudflareGeo = context.req.raw.cf;
     const country = cloudflareGeo?.country as string | undefined;
     const region = cloudflareGeo?.region as string | undefined;
@@ -46,13 +62,16 @@ app.post("/v1/provider-votes", async (context) => {
         winnerModelLabel: body.winnerModelLabel,
         competitors: body.competitors,
         message: body.message,
-        createdAt: new Date().toISOString(),
-        country,
-        region,
-        city,
-        latitude,
-        longitude,
+        createdAt: new Date(),
+        country: country ?? null,
+        region: region ?? null,
+        city: city ?? null,
+        latitude: latitude ?? null,
+        longitude: longitude ?? null,
     };
+
+    const db = createDb(context.env.DB);
+    await db.insert(providerVotes).values(vote);
 
     return context.json(vote, 201);
 });

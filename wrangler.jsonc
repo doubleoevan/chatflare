@@ -12,6 +12,14 @@
     "CF_ACCOUNT_ID": "8977b0dd43cf4f93d21cc79b9dbbb9be",
     "AI_GATEWAY_ID": "chatflare"
   },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "chatflare",
+      "database_id": "addd1acb-c4f5-49f3-9c06-e7ecca22ad28",
+      "migrations_dir": "worker/db/migrations"
+    }
+  ],
   "assets": {
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
