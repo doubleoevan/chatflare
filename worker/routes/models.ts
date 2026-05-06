@@ -8,11 +8,11 @@ const app = new Hono<{ Bindings: Env }>();
 // GET /v1/providers/:providerId/models
 // origin called each provider sdk; phase 2 returns stubbed lists
 // real provider calls return in phase 3 via ai gateway
-app.get("/v1/providers/:providerId/models", (c) => {
+app.get("/v1/providers/:providerId/models", (context) => {
     // mirror origin's api key header check for parity
-    const apiKey = c.req.header(PROVIDER_API_KEY_HEADER);
+    const apiKey = context.req.header(PROVIDER_API_KEY_HEADER);
     if (!apiKey) {
-        return c.json(
+        return context.json(
             {
                 code: "INVALID_API_KEY",
                 message: `Missing required header: ${ PROVIDER_API_KEY_HEADER }`,
@@ -22,10 +22,10 @@ app.get("/v1/providers/:providerId/models", (c) => {
     }
 
     // look up stubbed model list for the provider
-    const providerId = c.req.param("providerId");
+    const providerId = context.req.param("providerId");
     const models = stubModels[providerId];
     if (!models) {
-        return c.json(
+        return context.json(
             {
                 code: "INVALID_PROVIDER",
                 message: `Unknown provider: ${ providerId }`,
@@ -34,7 +34,7 @@ app.get("/v1/providers/:providerId/models", (c) => {
         );
     }
 
-    return c.json(models);
+    return context.json(models);
 });
 
 export { app as modelsRoutes };
