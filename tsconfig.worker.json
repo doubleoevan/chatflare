@@ -1,8 +1,16 @@
 {
   "extends": "./tsconfig.node.json",
   "compilerOptions": {
+    "ignoreDeprecations": "6.0",
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.worker.tsbuildinfo",
     "types": ["./worker-configuration.d.ts", "vite/client"],
+    "baseUrl": ".",
+    "paths": {
+      "@chatwar/shared": ["src/shared/index.ts"],
+      "@chatwar/shared/*": ["src/shared/*"],
+      "@chatwar/ui": ["src/ui/index.ts"],
+      "@chatwar/ui/*": ["src/ui/*"]
+    }
   },
   "include": ["worker"]
 }
