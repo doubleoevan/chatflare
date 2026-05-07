@@ -1,6 +1,6 @@
 import { ExternalLink } from "@/components/ExternalLink";
 
-const REPO_URL = "https://github.com/doubleoevan/chatwar";
+const REPO_URL = "https://github.com/doubleoevan/chatflare";
 
 export function Footer() {
   return (
